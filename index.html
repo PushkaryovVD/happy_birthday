@@ -1,44 +1,245 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-	<meta name="HandheldFriendly" content="true">
 	<meta name="theme-color" content="#F26B38">
 
 	<title>С днем рождения | Любимое солнце</title>
 	
+	<!-- Подключаем шрифты, иконки и анимации -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/balloon-css/0.5.0/balloon.min.css">
 	<link href="https://afeld.github.io/emoji-css/emoji.css" rel="stylesheet">
-	<link rel="shortcut icon" href="icon/favicon.ico" type="image/x-icon">
-	<link rel="icon" href="favicon.ico" type="image/x-icon">
-	<link rel="stylesheet" href="css/style.css">
+	<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+	
+	<!-- Скрипт для конфетти -->
+	<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+	<style>
+		/* === ОСНОВНЫЕ СТИЛИ === */
+		body {
+			background-color: #fceceb;
+			font-family: 'Caveat', cursive; /* Рукописный шрифт */
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+			margin: 0;
+			overflow: hidden;
+		}
+
+		/* === 3D КАРТОЧКА === */
+		#card {
+			position: relative;
+			width: 320px;
+			height: 500px;
+			perspective: 1500px; /* Для 3D эффекта перелистывания */
+		}
+
+		#card-front, #card-inside {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			border-radius: 15px;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+			transition: transform 1s cubic-bezier(0.4, 0.2, 0.2, 1);
+			transform-style: preserve-3d;
+		}
+
+		/* Лицевая сторона */
+		#card-front {
+			background: #F26B38;
+			color: white;
+			z-index: 2;
+			transform-origin: left center; /* Точка сгиба слева */
+		}
+
+		/* Внутренняя часть (разворот) */
+		#card-inside {
+			background: #fff;
+			z-index: 1;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			padding: 20px;
+			box-sizing: border-box;
+		}
+
+		/* Состояние открытой открытки */
+		#card.is-open #card-front {
+			transform: rotateY(-135deg); /* Открываем на 135 градусов */
+		}
+
+		/* === СОДЕРЖИМОЕ === */
+		.wrap {
+			text-align: center;
+			width: 100%;
+			padding: 20px;
+			box-sizing: border-box;
+		}
+
+		#card-inside .wrap p {
+			font-size: 22px;
+			line-height: 1.4;
+			color: #333;
+			text-align: left;
+		}
+
+		.title-text {
+			font-size: 32px;
+			font-weight: bold;
+			text-decoration: underline;
+			color: #e74c3c;
+			text-align: center;
+		}
+
+		.signed {
+			margin-top: 20px;
+			text-align: right !important;
+			font-size: 20px;
+		}
+
+		h1 {
+			font-size: 30px;
+			margin-top: 10px;
+		}
+
+		/* === ТОРТ И СВЕЧИ === */
+		.cake_and_velas {
+			position: relative;
+			margin-top: 20px;
+		}
+
+		#cake {
+			width: 180px;
+			height: auto;
+		}
+
+		.velas {
+			display: flex;
+			justify-content: space-between;
+			width: 80px;
+			position: absolute;
+			top: -15px;
+			left: 50%;
+			transform: translateX(-50%);
+			z-index: 10;
+		}
+
+		.fuego {
+			width: 12px;
+			height: 18px;
+			background: #ff9d00;
+			border-radius: 50% 50% 20% 20%;
+			box-shadow: 0 0 10px #ff9d00, 0 0 20px #ff6a00;
+			animation: flicker 0.6s infinite alternate;
+			cursor: pointer; /* Указатель при наведении на свечу */
+			transition: opacity 0.3s ease;
+		}
+
+		.fuego:hover {
+			transform: scale(1.2);
+		}
+
+		@keyframes flicker {
+			0% { transform: scale(1); opacity: 0.9; }
+			100% { transform: scale(1.1); opacity: 1; }
+		}
+
+		/* === КНОПКИ УПРАВЛЕНИЯ === */
+		button {
+			position: absolute;
+			bottom: 20px;
+			background: rgba(255, 255, 255, 0.3);
+			border: 2px solid white;
+			color: white;
+			border-radius: 50%;
+			width: 40px;
+			height: 40px;
+			font-size: 20px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			z-index: 20;
+		}
+
+		button:hover {
+			background: white;
+			color: #F26B38;
+		}
+
+		#open { right: 20px; }
+		#close { 
+			left: 20px; 
+			display: none; /* Скрыта пока открытка закрыта */
+			background: #F26B38;
+			border-color: #F26B38;
+			color: white;
+		}
+
+		/* Покажем кнопку закрыть при открытой открытке */
+		#card.is-open #close {
+			display: block;
+			transform: rotateY(135deg); /* Чтобы кнопка оставалась читаемой на перевернутой обложке */
+		}
+		#card.is-open #open {
+			display: none;
+		}
+
+		/* Полароид для фото внутри */
+		.polaroid {
+			background: white;
+			padding: 10px 10px 30px 10px;
+			box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+			transform: rotate(-5deg);
+			margin-top: -30px;
+			margin-bottom: 20px;
+			display: inline-block;
+		}
+		.polaroid .img {
+			width: 150px;
+			height: 150px;
+			background-size: cover;
+			background-position: center;
+			background-color: #eee;
+		}
+	</style>
 </head>
 <body>
-	<br> <br> <br> <br> <br>
+
 	<div id="card">
+		<!-- Внутренняя часть открытки -->
 		<div id="card-inside">
 			<div class="wrap">
-				<center><p class="animated infinite wobble"><b><u>С Днем Рождения!</b></u></p><center>
-				<p> Сегодня наступил твой день рождения, и я хочу пожелать тебе самого наилучшего! Пусть каждый день твоей жизни будет наполнен яркими эмоциями, счастьем и улыбками. Желаю тебе множества новых приключений, интересных знакомств, незабываемых моментов, и, конечно же, успехов во всех начинаниях!&nbsp;<i class="em-svg em-blush"></i></p>
-				<p class="signed"><u>Создано с </b><b> <i class="em-svg em-heart"></i></p>
+				<!-- Сюда вы можете вставить ссылку на реальное совместное фото! -->
+				<div style="text-align: center;">
+					<div class="polaroid">
+						<div class="img" style="background-image: url('https://static.vecteezy.com/system/resources/previews/000/608/881/original/heart-flat-icon-vector.jpg')"></div>
+					</div>
+				</div>
+
+				<p class="title-text animated infinite wobble">С Днем Рождения!</p>
+				<p>Сегодня наступил твой день рождения, и я хочу пожелать тебе самого наилучшего! Пусть каждый день твоей жизни будет наполнен яркими эмоциями, счастьем и улыбками. Желаю множества новых приключений, интересных знакомств, незабываемых моментов, и, конечно же, успехов! <i class="em-svg em-blush"></i></p>
+				<p class="signed">Создано с <i class="em-svg em-heart"></i></p>
 			</div>
 		</div>
+
+		<!-- Лицевая обложка -->
 		<div id="card-front">
 			<div class="wrap">
-				<h1 class="animated infinite swing">С днем рождения от Заи</h1>
+				<h1 class="animated infinite swing">С днем рождения<br>от Зайчика</h1>
 				<div class="cake_and_velas">
+					<!-- Свечи -->
 					<div class="velas">
-						<div class="fuego"></div>
-						<div class="fuego"></div>
-						<div class="fuego"></div>
-						<div class="fuego"></div>
-						<div class="fuego"></div>
+						<div class="fuego" title="Кликни, чтобы задуть!"></div>
+						<div class="fuego" title="Кликни, чтобы задуть!"></div>
+						<div class="fuego" title="Кликни, чтобы задуть!"></div>
+						<div class="fuego" title="Кликни, чтобы задуть!"></div>
+						<div class="fuego" title="Кликни, чтобы задуть!"></div>
 					</div>
-					<svg id="cake" version="1.1" x="0px" y="0px" width="290px" height="500px" viewBox="0 0 200 500" enable-background="new 0 0 200 500" xml:space="preserve">
+					<!-- Торт (ваш SVG код) -->
+					<svg id="cake" version="1.1" viewBox="0 0 200 500">
 						<path fill="#a88679" d="M173.667-13.94H26.333c-3.999 0-4-16.002 0-16.002h147.334c4 0 4.001 16.002 0 16.002z">
 							<animate id="e" attributeName="d" calcMode="spline" keySplines="0 0 1 1; 0 0 1 1" begin="a.end" dur="0.3s" fill="freeze" values="M173.667-13.94c-49.298,0-102.782,0-147.334,0c-3.999,0-4-16.002,0-16.002 c44.697,0,96.586,0,147.334,0C177.667-29.942,177.668-13.94,173.667-13.94z ; M173.667,411.567c-47.995,12.408-102.955,12.561-147.334,0 c-3.848-1.089-0.189-16.089,3.661-15.002c44.836,12.66,90.519,12.753,139.427,0.07 C173.293,395.631,177.541,410.566,173.667,411.567z ; M173.667,427.569c-49.795,0-101.101,0-147.334,0c-3.999,0-4-16.002,0-16.002 c46.385,0,97.539,0,147.334,0C177.668,411.567,177.667,427.569,173.667,427.569z"/>
 						</path>
@@ -61,19 +262,52 @@
 					</svg>
 				</div>
 			</div>
-			<button id="open" data-balloon="Нажмите чтобы открыть!" data-balloon-length="medium" data-balloon-pos="left" data-balloon-visible>&gt;
-			</button>
-			<button id="close" data-balloon="! bɿɒɔ ɘƨolɔ oɈ ʞɔilƆ" data-balloon-length="medium" data-balloon-pos="left" data-balloon-visible>&lt;
-			</button>
-			<div class="card-front_inside">
-				<br> <br> <br>
-				<div class="polaroid">
-					<div class="img" style="background-image: url('https://static.vecteezy.com/system/resources/previews/000/608/881/original/heart-flat-icon-vector.jpg')"></div>
-				</div>
-				<div class="shadow"></div>
-			</div>
+			<!-- Кнопки управления -->
+			<button id="open" title="Открыть">&gt;</button>
+			<button id="close" title="Закрыть">&lt;</button>
 		</div>
 	</div>
-	<script  src="js/index.js"></script>
+
+	<!-- === JAVASCRIPT === -->
+	<script>
+		// Находим элементы открытки и кнопок
+		const card = document.getElementById('card');
+		const openBtn = document.getElementById('open');
+		const closeBtn = document.getElementById('close');
+		const fuegos = document.querySelectorAll('.fuego'); // Все пламена свечей
+
+		// Функция открытия открытки
+		openBtn.addEventListener('click', () => {
+			card.classList.add('is-open');
+			
+			// Запускаем взрыв конфетти через небольшую паузу (чтобы открытка успела открыться)
+			setTimeout(() => {
+				confetti({
+					particleCount: 150, // Количество конфетти
+					spread: 80,         // Радиус разброса
+					origin: { y: 0.6 }, // Откуда вылетают (чуть ниже центра)
+					colors: ['#F26B38', '#fceceb', '#ff9d00', '#ffffff'] // Цвета под дизайн
+				});
+			}, 400); 
+		});
+
+		// Функция закрытия открытки
+		closeBtn.addEventListener('click', () => {
+			card.classList.remove('is-open');
+		});
+
+		// Функция "задувания" свечей
+		fuegos.forEach(fuego => {
+			fuego.addEventListener('click', function() {
+				// Делаем пламя прозрачным при клике
+				this.style.opacity = '0';
+				
+				// Через полсекунды полностью убираем элемент, чтобы нельзя было кликать в пустоту
+				setTimeout(() => {
+					this.style.display = 'none';
+				}, 300);
+			});
+		});
+	</script>
 </body>
 </html>
